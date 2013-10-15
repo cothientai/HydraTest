@@ -10,7 +10,7 @@ public class TestScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		transform.Translate(-Vector3.forward);
+		rigidbody.AddForce(Vector3.forward*10);
 	}
 	void OnTriggerEnter(Collider collision)	
 	{
