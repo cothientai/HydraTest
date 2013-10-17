@@ -14,7 +14,7 @@ public class SixenseObjectController : MonoBehaviour {
 	protected float				m_fLastTriggerVal = 0.0f;
 
     protected Vector3 previousPosition;
-
+    protected Vector3 controllerPosition;
 	public Transform palm;
 	public Transform middleFinger;
 	public LayerMask wallsLayer;
@@ -93,21 +93,35 @@ public class SixenseObjectController : MonoBehaviour {
 	protected void UpdatePosition( SixenseInput.Controller controller )
 	{
         //CheckHitOnWall(controller);
-		Vector3 controllerPosition = new Vector3( controller.Position.x * Sensitivity.x,
+		controllerPosition = new Vector3( controller.Position.x * Sensitivity.x,
 												  controller.Position.y * Sensitivity.y,
 												  controller.Position.z * Sensitivity.z );
+       
+        //Debug.Log("ControllerPostion : " + controllerPosition);
         if (controllerPosition != previousPosition)
         {
             Vector3 forceToGive = new Vector3(controllerPosition.x - previousPosition.x,
                                               controllerPosition.y - previousPosition.y,
                                               controllerPosition.z - previousPosition.z);
-            Debug.Log("forceToGive : " + forceToGive);
+            if (bLockZAxis && lockedPosition.z <= controllerPosition.z) 
+            {
+                forceToGive = new Vector3(forceToGive.x, forceToGive.y, 0) ;
+                Debug.Log("not giving force in Z");
+            }
+            else if(lockedPosition.z > controllerPosition.z)
+            {
+                bLockZAxis = false;
+            }
+            //Debug.Log("forceToGive : " + forceToGive);
             if (forceToGive == new Vector3(0f, 0f, 0f)) 
             {
                 rigidbody.velocity = new Vector3(0, 0, 0);
                 rigidbody.angularVelocity = new Vector3(0, 0, 0);
-            } 
-            rigidbody.AddForce(forceToGive * 5000 * Time.deltaTime,ForceMode.Impulse);
+            }
+            else
+            {
+                rigidbody.AddForce(forceToGive * 7000 * Time.deltaTime, ForceMode.Impulse);
+            }
         }
         previousPosition = controllerPosition;
         //if(bLockZAxis && !hasTempLockedPos )
@@ -143,6 +157,23 @@ public class SixenseObjectController : MonoBehaviour {
 	
 	
 	//TESTS
+    void OnCollisionEnter(Collision collision)
+    {
+        Debug.Log("collision");
+        foreach (ContactPoint contact in collision.contacts)
+        {
+            Debug.DrawRay(contact.point, contact.normal, Color.red);
+            Debug.Log("contact.point : " + contact.point);
+            Debug.Log("contact Normal : " + contact.normal);
+            if (contact.normal.z < -0.1)
+            {
+                bLockZAxis = true;
+                Debug.Log("Locked Z axis");
+                lockedPosition = controllerPosition;
+            }
+        }
+
+    }
 	void CheckHitOnWall(SixenseInput.Controller controller)
 	{
 		Ray ray = new Ray(middleFinger.position,middleFinger.transform.forward);

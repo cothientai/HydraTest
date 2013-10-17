@@ -156,17 +156,10 @@ public class SixenseHandController : SixenseObjectController
 	}
 
 
-    void OnCollisionEnter(Collision collision)
-    {
-        Debug.Log("collision");
-
-    }
+    
     void OnCollisionStay(Collision collisionInfo)
     {
-        foreach (ContactPoint contact in collisionInfo.contacts)
-        {
-            Debug.DrawRay(contact.point, contact.normal, Color.red);
-        }
+       
     }
 //	void OnTriggerStay(Collider collision) {
 
