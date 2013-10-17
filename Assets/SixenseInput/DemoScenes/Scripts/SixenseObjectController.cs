@@ -12,7 +12,9 @@ public class SixenseObjectController : MonoBehaviour {
 	protected Vector3			m_baseControllerPosition;
 		
 	protected float				m_fLastTriggerVal = 0.0f;
-	
+
+    protected Vector3 previousPosition;
+
 	public Transform palm;
 	public Transform middleFinger;
 	public LayerMask wallsLayer;
@@ -27,8 +29,8 @@ public class SixenseObjectController : MonoBehaviour {
 	{
 		m_initialRotation = this.gameObject.transform.localRotation;
 		m_initialPosition = this.gameObject.transform.localPosition;
-		Debug.Log("Initial position : " + m_initialPosition);
-		Debug.Log("Locked position : " + lockedPosition);
+        //Debug.Log("Initial position : " + m_initialPosition);
+        //Debug.Log("Locked position : " + lockedPosition);
 	}
 	
 	// Update is called once per frame
@@ -67,9 +69,10 @@ public class SixenseObjectController : MonoBehaviour {
 			m_baseControllerPosition = new Vector3( controller.Position.x * Sensitivity.x,
 													controller.Position.y * Sensitivity.y,
 													controller.Position.z * Sensitivity.z );
-//			Debug.Log("basecontroller : " + m_baseControllerPosition);
+
 			// this is the new start position
 			m_initialPosition = this.gameObject.transform.localPosition;
+            previousPosition = m_baseControllerPosition;
 		}
 		
 		if ( m_enabled )
@@ -81,7 +84,6 @@ public class SixenseObjectController : MonoBehaviour {
 			{
 				var angH = controller.JoystickX * 60;
 	  			var angV = controller.JoystickY * 45;
-//				Debug.Log("X joystick position of controller" + controller.JoystickX);
 	  			camera.transform.localEulerAngles = new Vector3(angV, angH, 0);
 			}
 		}
@@ -90,35 +92,49 @@ public class SixenseObjectController : MonoBehaviour {
 	
 	protected void UpdatePosition( SixenseInput.Controller controller )
 	{
-		CheckHitOnWall(controller);
+        //CheckHitOnWall(controller);
 		Vector3 controllerPosition = new Vector3( controller.Position.x * Sensitivity.x,
 												  controller.Position.y * Sensitivity.y,
 												  controller.Position.z * Sensitivity.z );
-		if(bLockZAxis && !hasTempLockedPos )
-		{
-			//get the locked position if the boolean is true
-			lockedPosition = controllerPosition;
-			hasTempLockedPos = true;
-		}
-		else if(controllerPosition.z <= lockedPosition.z)
-		{
-			bLockZAxis = false;
-			hasTempLockedPos = false;
-		}
-		
+        if (controllerPosition != previousPosition)
+        {
+            Vector3 forceToGive = new Vector3(controllerPosition.x - previousPosition.x,
+                                              controllerPosition.y - previousPosition.y,
+                                              controllerPosition.z - previousPosition.z);
+            Debug.Log("forceToGive : " + forceToGive);
+            if (forceToGive == new Vector3(0f, 0f, 0f)) 
+            {
+                rigidbody.velocity = new Vector3(0, 0, 0);
+                rigidbody.angularVelocity = new Vector3(0, 0, 0);
+            } 
+            rigidbody.AddForce(forceToGive * 5000 * Time.deltaTime,ForceMode.Impulse);
+        }
+        previousPosition = controllerPosition;
+        //if(bLockZAxis && !hasTempLockedPos )
+        //{
+        //    //get the locked position if the boolean is true
+        //    lockedPosition = controllerPosition;
+        //    hasTempLockedPos = true;
+        //}
+        //else if(controllerPosition.z <= lockedPosition.z)
+        //{
+        //    bLockZAxis = false;
+        //    hasTempLockedPos = false;
+        //}
+        //Debug.Log("Controller position: " + controllerPosition);
 		// distance controller has moved since enabling positional control
-		Vector3 vDeltaControllerPos;
-		vDeltaControllerPos.x = controllerPosition.x - m_baseControllerPosition.x;
-		vDeltaControllerPos.y = controllerPosition.y - m_baseControllerPosition.y;
-		if (bLockZAxis) {
-			vDeltaControllerPos.z = lockedPosition.z - m_baseControllerPosition.z;
-		}
-		else {
-			vDeltaControllerPos.z = controllerPosition.z - m_baseControllerPosition.z;
-		}
-		
+        //Vector3 vDeltaControllerPos;
+        //vDeltaControllerPos.x = controllerPosition.x - m_baseControllerPosition.x;
+        //vDeltaControllerPos.y = controllerPosition.y - m_baseControllerPosition.y;
+        //if (bLockZAxis) {
+        //    vDeltaControllerPos.z = lockedPosition.z - m_baseControllerPosition.z;
+        //}
+        //else {
+            //vDeltaControllerPos.z = controllerPosition.z - m_baseControllerPosition.z;
+        //}
+            //Debug.Log("vDeltaControllerPosition : " + vDeltaControllerPos);
 		// update the localposition of the object
-		this.gameObject.transform.localPosition = m_initialPosition + vDeltaControllerPos;
+        //this.gameObject.transform.localPosition = m_initialPosition + vDeltaControllerPos;
 	}
 	protected void UpdateRotation( SixenseInput.Controller controller )
 	{
