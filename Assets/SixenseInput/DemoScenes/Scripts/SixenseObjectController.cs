@@ -15,9 +15,9 @@ public class SixenseObjectController : MonoBehaviour {
 
     protected Vector3 previousPosition;
     protected Vector3 controllerPosition;
-	public Transform palm;
-	public Transform middleFinger;
-	public LayerMask wallsLayer;
+//	public Transform palm;
+//	public Transform middleFinger;
+//	public LayerMask wallsLayer;
 	
 	protected bool bLockZAxis;
 	protected Vector3 lockedPosition;
@@ -98,32 +98,34 @@ public class SixenseObjectController : MonoBehaviour {
 												  controller.Position.z * Sensitivity.z );
        
         //Debug.Log("ControllerPostion : " + controllerPosition);
-        if (controllerPosition != previousPosition)
-        {
-            Vector3 forceToGive = new Vector3(controllerPosition.x - previousPosition.x,
-                                              controllerPosition.y - previousPosition.y,
-                                              controllerPosition.z - previousPosition.z);
-            if (bLockZAxis && lockedPosition.z <= controllerPosition.z) 
-            {
-                forceToGive = new Vector3(forceToGive.x, forceToGive.y, 0) ;
-                Debug.Log("not giving force in Z");
-            }
-            else if(lockedPosition.z > controllerPosition.z)
-            {
-                bLockZAxis = false;
-            }
-            //Debug.Log("forceToGive : " + forceToGive);
-            if (forceToGive == new Vector3(0f, 0f, 0f)) 
-            {
-                rigidbody.velocity = new Vector3(0, 0, 0);
-                rigidbody.angularVelocity = new Vector3(0, 0, 0);
-            }
-            else
-            {
-                rigidbody.AddForce(forceToGive * 7000 * Time.deltaTime, ForceMode.Impulse);
-            }
-        }
-        previousPosition = controllerPosition;
+//        if (controllerPosition != previousPosition)
+//        {
+//            Vector3 forceToGive = new Vector3(controllerPosition.x - previousPosition.x,
+//                                              controllerPosition.y - previousPosition.y,
+//                                              controllerPosition.z - previousPosition.z);
+//            if (bLockZAxis && lockedPosition.z <= controllerPosition.z) 
+//            {
+//                forceToGive = new Vector3(forceToGive.x, forceToGive.y, 0) ;
+//                Debug.Log("not giving force in Z");
+//            }
+//            else if(lockedPosition.z > controllerPosition.z)
+//            {
+//                bLockZAxis = false;
+//            }
+//            //Debug.Log("forceToGive : " + forceToGive);
+//			Debug.Log("forceToGive : " + forceToGive);
+//            if (Mathf.Round(forceToGive.x) <0.1f && Mathf.Round(forceToGive.y) <0.1f && Mathf.Round(forceToGive.z) <0.1f ) 
+//            {
+//                rigidbody.velocity = new Vector3(0, 0, 0);
+//                rigidbody.angularVelocity = new Vector3(0, 0, 0);
+//				Debug.Log("IT IS NOT MOVING");
+//            }
+//            else
+//            {
+//                rigidbody.AddForce(forceToGive * 7000 * Time.deltaTime, ForceMode.Impulse);
+//            }
+//        }
+//        previousPosition = controllerPosition;
         //if(bLockZAxis && !hasTempLockedPos )
         //{
         //    //get the locked position if the boolean is true
@@ -137,18 +139,18 @@ public class SixenseObjectController : MonoBehaviour {
         //}
         //Debug.Log("Controller position: " + controllerPosition);
 		// distance controller has moved since enabling positional control
-        //Vector3 vDeltaControllerPos;
-        //vDeltaControllerPos.x = controllerPosition.x - m_baseControllerPosition.x;
-        //vDeltaControllerPos.y = controllerPosition.y - m_baseControllerPosition.y;
+        Vector3 vDeltaControllerPos;
+        vDeltaControllerPos.x = controllerPosition.x - m_baseControllerPosition.x;
+        vDeltaControllerPos.y = controllerPosition.y - m_baseControllerPosition.y;
         //if (bLockZAxis) {
         //    vDeltaControllerPos.z = lockedPosition.z - m_baseControllerPosition.z;
         //}
         //else {
-            //vDeltaControllerPos.z = controllerPosition.z - m_baseControllerPosition.z;
+            vDeltaControllerPos.z = controllerPosition.z - m_baseControllerPosition.z;
         //}
             //Debug.Log("vDeltaControllerPosition : " + vDeltaControllerPos);
 		// update the localposition of the object
-        //this.gameObject.transform.localPosition = m_initialPosition + vDeltaControllerPos;
+        this.gameObject.transform.localPosition = m_initialPosition + vDeltaControllerPos;
 	}
 	protected void UpdateRotation( SixenseInput.Controller controller )
 	{
@@ -157,57 +159,57 @@ public class SixenseObjectController : MonoBehaviour {
 	
 	
 	//TESTS
-    void OnCollisionEnter(Collision collision)
-    {
-        Debug.Log("collision");
-        foreach (ContactPoint contact in collision.contacts)
-        {
-            Debug.DrawRay(contact.point, contact.normal, Color.red);
-            Debug.Log("contact.point : " + contact.point);
-            Debug.Log("contact Normal : " + contact.normal);
-            if (contact.normal.z < -0.1)
-            {
-                bLockZAxis = true;
-                Debug.Log("Locked Z axis");
-                lockedPosition = controllerPosition;
-            }
-        }
-
-    }
-	void CheckHitOnWall(SixenseInput.Controller controller)
-	{
-		Ray ray = new Ray(middleFinger.position,middleFinger.transform.forward);
-		Debug.DrawRay(middleFinger.position,middleFinger.transform.forward*0.1f);
-		RaycastHit hit;
-		if (Physics.Raycast(ray,out hit,0.1f,wallsLayer)) {
-			bLockZAxis = true;
-			//Debug.Log("LOCKED Z AXIS");
-		}
-//		else {
-//			bLockZAxis=false;
+//    void OnCollisionEnter(Collision collision)
+//    {
+//        Debug.Log("collision");
+//        foreach (ContactPoint contact in collision.contacts)
+//        {
+//            Debug.DrawRay(contact.point, contact.normal, Color.red);
+//            Debug.Log("contact.point : " + contact.point);
+//            Debug.Log("contact Normal : " + contact.normal);
+//            if (contact.normal.z < -0.1f)
+//            {
+//                bLockZAxis = true;
+//                Debug.Log("Locked Z axis");
+//                lockedPosition = controllerPosition;
+//            }
+//        }
+//
+//    }
+//	void CheckHitOnWall(SixenseInput.Controller controller)
+//	{
+//		Ray ray = new Ray(middleFinger.position,middleFinger.transform.forward);
+//		Debug.DrawRay(middleFinger.position,middleFinger.transform.forward*0.1f);
+//		RaycastHit hit;
+//		if (Physics.Raycast(ray,out hit,0.1f,wallsLayer)) {
+//			bLockZAxis = true;
+//			//Debug.Log("LOCKED Z AXIS");
 //		}
-	}
-	void GrabWall(SixenseInput.Controller controller)
-	{
-			float fTriggerVal = controller.Trigger;
-			fTriggerVal = Mathf.Lerp( m_fLastTriggerVal, fTriggerVal, 0.1f );
-			
-			Vector3 positionPalm = palm.position;
-			Debug.DrawRay(positionPalm,-palm.transform.up);
-			if(fTriggerVal >0.9f)
-			{
-				
-				m_fLastTriggerVal = fTriggerVal;
-//				Debug.Log("controllers position "+controller.Position);
-				RaycastHit hit;
-				if(Physics.Raycast(positionPalm,-palm.transform.up,out hit,wallsLayer) )
-				{
-					
-					//hit.transform.parent = transform;
-					//grabbedObject = hit.transform;
-					//grabbedObject.position = -palm.transform.up;
-					Debug.Log("hited the " + hit.transform);
-				}
-			}
-	}
+////		else {
+////			bLockZAxis=false;
+////		}
+//	}
+//	void GrabWall(SixenseInput.Controller controller)
+//	{
+//			float fTriggerVal = controller.Trigger;
+//			fTriggerVal = Mathf.Lerp( m_fLastTriggerVal, fTriggerVal, 0.1f );
+//			
+//			Vector3 positionPalm = palm.position;
+//			Debug.DrawRay(positionPalm,-palm.transform.up);
+//			if(fTriggerVal >0.9f)
+//			{
+//				
+//				m_fLastTriggerVal = fTriggerVal;
+////				Debug.Log("controllers position "+controller.Position);
+//				RaycastHit hit;
+//				if(Physics.Raycast(positionPalm,-palm.transform.up,out hit,wallsLayer) )
+//				{
+//					
+//					//hit.transform.parent = transform;
+//					//grabbedObject = hit.transform;
+//					//grabbedObject.position = -palm.transform.up;
+//					Debug.Log("hited the " + hit.transform);
+//				}
+//			}
+//	}
 }
