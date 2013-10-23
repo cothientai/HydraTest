@@ -23,7 +23,7 @@ public class SixenseObjectController : MonoBehaviour {
 	protected Vector3 lockedPosition;
 	protected bool hasTempLockedPos;
 	
-	public Transform camera;
+	public Transform cameraObject;
 	// Use this for initialization
 	protected virtual void Start() 
 	{
@@ -84,7 +84,7 @@ public class SixenseObjectController : MonoBehaviour {
 			{
 				var angH = controller.JoystickX * 60;
 	  			var angV = controller.JoystickY * 45;
-	  			camera.transform.localEulerAngles = new Vector3(angV, angH, 0);
+	  			cameraObject.transform.localEulerAngles = new Vector3(angV, angH, 0);
 			}
 		}
 	}
@@ -159,6 +159,7 @@ public class SixenseObjectController : MonoBehaviour {
 	
 	
 	//TESTS
+    
 //    void OnCollisionEnter(Collision collision)
 //    {
 //        Debug.Log("collision");
