@@ -22,6 +22,7 @@ public class CollideScript : MonoBehaviour {
         {
             tempLocation = hand.position;
             Debug.Log("TempPosition" + tempLocation);
+            Debug.Log("rigidbody magnitude" + rigidbody.velocity.magnitude);
         }
 
     }
