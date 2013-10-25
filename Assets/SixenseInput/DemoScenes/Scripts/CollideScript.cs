@@ -21,8 +21,10 @@ public class CollideScript : MonoBehaviour {
         if (col.transform.tag == tagWall)
         {
             tempLocation = hand.position;
-            Debug.Log("TempPosition" + tempLocation);
-            Debug.Log("rigidbody magnitude" + rigidbody.velocity.magnitude);
+            //Debug.Log("TempPosition" + tempLocation);
+            //Debug.Log("rigidbody magnitude" + rigidbody.velocity.magnitude);
+            float angle = Vector3.Angle(col.contacts[0].normal, Vector3.forward);
+            Debug.Log("Angle : " + angle);
         }
 
     }
@@ -30,12 +32,12 @@ public class CollideScript : MonoBehaviour {
     {
         if (collisionInfo.transform.tag == tagWall)
         {
-            Debug.Log("Colliding");
+            //Debug.Log("Colliding");
             Vector3 distance;
             distance = tempLocation - hand.position;
             player.position += distance;
             player.rigidbody.useGravity = false;
-            Debug.Log(distance);
+            //Debug.Log(distance);
         }
     }
     void OnCollisionExit(Collision col)

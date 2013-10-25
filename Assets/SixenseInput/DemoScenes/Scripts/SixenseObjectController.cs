@@ -15,22 +15,33 @@ public class SixenseObjectController : MonoBehaviour {
 
     protected Vector3 previousPosition;
     protected Vector3 controllerPosition;
-//	public Transform palm;
-//	public Transform middleFinger;
-//	public LayerMask wallsLayer;
-	
+
+    public Vector3 startPosition;
+    public Quaternion startRotation;
+    public Transform spawnpoint;
+
 	protected bool bLockZAxis;
 	protected Vector3 lockedPosition;
 	protected bool hasTempLockedPos;
 	
 	public Transform cameraObject;
+    public Transform player;
+    public Transform trail;
+
+    public Transform[] waypoints;
+    private bool waypointTracker = false;
 	// Use this for initialization
 	protected virtual void Start() 
 	{
 		m_initialRotation = this.gameObject.transform.localRotation;
 		m_initialPosition = this.gameObject.transform.localPosition;
-        //Debug.Log("Initial position : " + m_initialPosition);
-        //Debug.Log("Locked position : " + lockedPosition);
+
+        startPosition = this.gameObject.transform.localPosition;
+        //if (waypoints.Length !=0)
+        //{
+        //  waypoints = new Transform[waypoints.Length];
+        //}
+       
 	}
 	
 	// Update is called once per frame
@@ -62,6 +73,7 @@ public class SixenseObjectController : MonoBehaviour {
 	{
 		if ( controller.GetButtonDown( SixenseButtons.START ) )
 		{
+            this.gameObject.transform.localPosition = startPosition;
 			// enable position and orientation control
 			m_enabled = !m_enabled;
 			
@@ -74,7 +86,15 @@ public class SixenseObjectController : MonoBehaviour {
 			m_initialPosition = this.gameObject.transform.localPosition;
             previousPosition = m_baseControllerPosition;
 		}
-		
+        if (controller.GetButtonDown(SixenseButtons.ONE) && controller.Hand == SixenseHands.LEFT)
+        {
+            player.position = spawnpoint.position;
+            player.rotation = spawnpoint.rotation;
+
+            //m_enabled = false;
+            //this.gameObject.transform.localPosition = startPosition;
+            //this.gameObject.transform.localRotation = startRotation;
+        }
 		if ( m_enabled )
 		{
 			UpdatePosition( controller );
@@ -86,70 +106,60 @@ public class SixenseObjectController : MonoBehaviour {
 	  			var angV = controller.JoystickY * 45;
 	  			cameraObject.transform.localEulerAngles = new Vector3(angV, angH, 0);
 			}
+            CheckAttacks(controller);
 		}
 	}
+
+    private void CheckAttacks(SixenseInput.Controller controller)
+    {
+        if (controller.Hand == SixenseHands.RIGHT && controller.GetButtonDown(SixenseButtons.BUMPER))
+        {
+            Debug.Log("button down");
+            trail.GetComponent<TrailRenderer>().enabled = true;
+            foreach(Transform waypoint in waypoints)
+            {
+                waypoint.gameObject.SetActive(true);
+            }
+            waypointTracker = true;
+        }
+        if(waypointTracker == true)
+        {
+            bool canBefired = true;
+            for (int i = 0; i < waypoints.Length; i++)
+            {
+                if (waypoints[i].GetComponent<Waypoint>().isTriggerd == false)
+                {
+                    canBefired = false;
+                }
+            }
+            if (canBefired)
+            {
+                waypointTracker = false;
+                Debug.Log("SHOTS FIRED");
+
+                foreach(Transform waypoint in waypoints)
+                {
+                    waypoint.GetComponent<Waypoint>().isTriggerd = false;
+                    waypoint.gameObject.SetActive(false);
+                    trail.GetComponent<TrailRenderer>().enabled = false;
+                }
+            }
+        }
+    }
 	
 	
 	protected void UpdatePosition( SixenseInput.Controller controller )
 	{
-        //CheckHitOnWall(controller);
 		controllerPosition = new Vector3( controller.Position.x * Sensitivity.x,
 												  controller.Position.y * Sensitivity.y,
 												  controller.Position.z * Sensitivity.z );
        
-        //Debug.Log("ControllerPostion : " + controllerPosition);
-//        if (controllerPosition != previousPosition)
-//        {
-//            Vector3 forceToGive = new Vector3(controllerPosition.x - previousPosition.x,
-//                                              controllerPosition.y - previousPosition.y,
-//                                              controllerPosition.z - previousPosition.z);
-//            if (bLockZAxis && lockedPosition.z <= controllerPosition.z) 
-//            {
-//                forceToGive = new Vector3(forceToGive.x, forceToGive.y, 0) ;
-//                Debug.Log("not giving force in Z");
-//            }
-//            else if(lockedPosition.z > controllerPosition.z)
-//            {
-//                bLockZAxis = false;
-//            }
-//            //Debug.Log("forceToGive : " + forceToGive);
-//			Debug.Log("forceToGive : " + forceToGive);
-//            if (Mathf.Round(forceToGive.x) <0.1f && Mathf.Round(forceToGive.y) <0.1f && Mathf.Round(forceToGive.z) <0.1f ) 
-//            {
-//                rigidbody.velocity = new Vector3(0, 0, 0);
-//                rigidbody.angularVelocity = new Vector3(0, 0, 0);
-//				Debug.Log("IT IS NOT MOVING");
-//            }
-//            else
-//            {
-//                rigidbody.AddForce(forceToGive * 7000 * Time.deltaTime, ForceMode.Impulse);
-//            }
-//        }
-//        previousPosition = controllerPosition;
-        //if(bLockZAxis && !hasTempLockedPos )
-        //{
-        //    //get the locked position if the boolean is true
-        //    lockedPosition = controllerPosition;
-        //    hasTempLockedPos = true;
-        //}
-        //else if(controllerPosition.z <= lockedPosition.z)
-        //{
-        //    bLockZAxis = false;
-        //    hasTempLockedPos = false;
-        //}
-        //Debug.Log("Controller position: " + controllerPosition);
 		// distance controller has moved since enabling positional control
         Vector3 vDeltaControllerPos;
         vDeltaControllerPos.x = controllerPosition.x - m_baseControllerPosition.x;
         vDeltaControllerPos.y = controllerPosition.y - m_baseControllerPosition.y;
-        //if (bLockZAxis) {
-        //    vDeltaControllerPos.z = lockedPosition.z - m_baseControllerPosition.z;
-        //}
-        //else {
-            vDeltaControllerPos.z = controllerPosition.z - m_baseControllerPosition.z;
-        //}
-            //Debug.Log("vDeltaControllerPosition : " + vDeltaControllerPos);
-		// update the localposition of the object
+        vDeltaControllerPos.z = controllerPosition.z - m_baseControllerPosition.z;
+
         this.gameObject.transform.localPosition = m_initialPosition + vDeltaControllerPos;
 	}
 	protected void UpdateRotation( SixenseInput.Controller controller )
