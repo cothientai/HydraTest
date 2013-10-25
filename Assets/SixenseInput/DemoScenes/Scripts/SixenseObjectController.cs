@@ -37,11 +37,9 @@ public class SixenseObjectController : MonoBehaviour {
 		m_initialPosition = this.gameObject.transform.localPosition;
 
         startPosition = this.gameObject.transform.localPosition;
-        //if (waypoints.Length !=0)
-        //{
-        //  waypoints = new Transform[waypoints.Length];
-        //}
-       
+		startRotation = this.gameObject.transform.rotation;
+		Debug.Log("init rotation : " + m_initialRotation);
+       	Debug.Log("start Rotation : " + startRotation);
 	}
 	
 	// Update is called once per frame
@@ -71,6 +69,7 @@ public class SixenseObjectController : MonoBehaviour {
 	
 	protected virtual void UpdateObject(  SixenseInput.Controller controller )
 	{
+		
 		if ( controller.GetButtonDown( SixenseButtons.START ) )
 		{
             this.gameObject.transform.localPosition = startPosition;
@@ -86,14 +85,27 @@ public class SixenseObjectController : MonoBehaviour {
 			m_initialPosition = this.gameObject.transform.localPosition;
             previousPosition = m_baseControllerPosition;
 		}
-        if (controller.GetButtonDown(SixenseButtons.ONE) && controller.Hand == SixenseHands.LEFT)
+        if (controller.GetButtonDown(SixenseButtons.ONE))// && controller.Hand == SixenseHands.LEFT)
         {
+			m_enabled = false;
             player.position = spawnpoint.position;
             player.rotation = spawnpoint.rotation;
 
             //m_enabled = false;
-            //this.gameObject.transform.localPosition = startPosition;
-            //this.gameObject.transform.localRotation = startRotation;
+//			Quaternion localRotation = new Quaternion(0,0,0,1f) ;
+//            transform.localRotation = localRotation;
+			 transform.rotation = Quaternion.Euler(0,0,0);
+			if(controller.Hand == SixenseHands.LEFT)
+			{
+				transform.GetChild(0).rotation = Quaternion.Euler(0,0,90);
+			}
+			else
+			{
+				transform.GetChild(0).rotation = Quaternion.Euler(0,0,270);
+			}
+					
+			Debug.Log("init rotation : " + m_initialRotation);
+       		Debug.Log("start Rotation : " + startRotation);
         }
 		if ( m_enabled )
 		{
@@ -165,6 +177,10 @@ public class SixenseObjectController : MonoBehaviour {
 	protected void UpdateRotation( SixenseInput.Controller controller )
 	{
 		this.gameObject.transform.localRotation = controller.Rotation * m_initialRotation;
+		Debug.Log("Raw rotation " + controller.RotationRaw);
+//		Debug.Log("local Rot : " + this.gameObject.transform.localRotation);
+//		Debug.Log("controller rotation : " + controller.Rotation);
+//		Debug.Log("init rotation : " + m_initialRotation);
 	}
 	
 	

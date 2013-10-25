@@ -23,7 +23,8 @@ public class Waypoint : MonoBehaviour {
     }
     void OnTriggerEnter(Collider collider)
     {
-        Debug.Log("hitted the colliedr");
+        Debug.Log("hitted the collider");
         isTriggerd = true;
+		gameObject.SetActive(false);
     }
 }
