@@ -40,7 +40,7 @@ public class SixenseObjectController : MonoBehaviour {
 
     //public Transform[] waypoints;
     //private bool waypointTracker = false;
-    public Transform fireBall;
+
     public Vector3 previousPoint;
     private Direction previousDirection = Direction.None;
     public List<Direction> points;
@@ -83,6 +83,11 @@ public class SixenseObjectController : MonoBehaviour {
 		{
 			GUI.Box( new Rect( Screen.width / 2 - 100, Screen.height - 40, 200, 30 ),  "Press Start To Move/Rotate" );
 		}
+        if(Hand == SixenseHands.RIGHT)
+        {
+
+            GUI.Label(new Rect(10, 10, 200, 20), "Spell direction : "+ previousDirection.ToString());
+        }
 	}
 	
 	
@@ -113,7 +118,8 @@ public class SixenseObjectController : MonoBehaviour {
 			UpdatePosition( controller );
 			UpdateRotation( controller );
 			//angle to watch with right joystick
-            UpdatePlayerViewRotation(controller);
+            UpdatePlayerMovement(controller);
+            
             RecordMotion(controller);
 		}
 	}
@@ -143,13 +149,21 @@ public class SixenseObjectController : MonoBehaviour {
         Debug.Log("init rotation : " + m_initialRotation);
         Debug.Log("start Rotation : " + startRotation);
     }
-    private void UpdatePlayerViewRotation(SixenseInput.Controller controller)
+    private void UpdatePlayerMovement(SixenseInput.Controller controller)
     {
         if (controller.Hand == SixenseHands.RIGHT)
         {
-            var angH = controller.JoystickX * 60;
-            var angV = controller.JoystickY * 45;
-            cameraObject.transform.localEulerAngles = new Vector3(angV, angH, 0);
+            float angH = controller.JoystickX * 60;
+            float angV = controller.JoystickY * 45;
+            cameraObject.transform.localEulerAngles = new Vector3(angV, 0, 0);
+            player.transform.Rotate(new Vector3(0, angH, 0) * Time.deltaTime);
+        }
+        if(controller.Hand == SixenseHands.LEFT)
+        {
+            float joystickXAxisL = controller.JoystickX * 10;
+            float joystickYAxisL = controller.JoystickY * 10;
+
+            player.transform.rigidbody.AddRelativeForce(joystickXAxisL,0,joystickYAxisL);
         }
     }
     public void RecordMotion(SixenseInput.Controller controller)
