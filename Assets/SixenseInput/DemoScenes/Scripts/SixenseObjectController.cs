@@ -47,6 +47,7 @@ public class SixenseObjectController : MonoBehaviour {
     public Attack[] attacks;
     public bool canFireAttack = false;
     public float offset = 30f;
+    public float minDistance = 0.5f;
 	// Use this for initialization
 	protected virtual void Start() 
 	{
@@ -186,7 +187,7 @@ public class SixenseObjectController : MonoBehaviour {
         {
             Vector3 currentPoint = this.transform.localPosition;
             //if the distance from the current point is far eneogh from the previous
-            if(Vector3.Distance(currentPoint,previousPoint)>1f)
+            if(Vector3.Distance(currentPoint,previousPoint)>minDistance)
             {
                 //Debug.Log("Distance : " + Vector3.Distance(currentPoint, previousPoint));
                 Vector3 tempVector = new Vector3(currentPoint.x - previousPoint.x, currentPoint.y - previousPoint.y, 0);
