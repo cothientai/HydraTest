@@ -34,7 +34,7 @@ public class CollideScript : MonoBehaviour {
             //Debug.Log("TempPosition" + tempLocation);
             //Debug.Log("rigidbody magnitude" + rigidbody.velocity.magnitude);
             float angle = Vector3.Angle(col.contacts[0].normal, Vector3.forward);
-            Debug.Log("Angle : " + angle);
+            //Debug.Log("Angle : " + angle);
         }
 
     }
