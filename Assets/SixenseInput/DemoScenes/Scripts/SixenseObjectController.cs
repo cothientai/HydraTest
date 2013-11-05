@@ -1,8 +1,17 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+public enum Direction
+{
+    None,
+    Up,
+    Right,
+    Down,
+    Left
+}
 
 public class SixenseObjectController : MonoBehaviour {
-
+    
 	public SixenseHands			Hand;
 	public Vector3				Sensitivity = new Vector3( 0.01f, 0.01f, 0.01f );
 	
@@ -20,16 +29,24 @@ public class SixenseObjectController : MonoBehaviour {
     public Quaternion startRotation;
     public Transform spawnpoint;
 
-	protected bool bLockZAxis;
-	protected Vector3 lockedPosition;
-	protected bool hasTempLockedPos;
+    //protected bool bLockZAxis;
+    //protected Vector3 lockedPosition;
+    //protected bool hasTempLockedPos;
 	
 	public Transform cameraObject;
     public Transform player;
     public Transform trail;
+    public Transform leftHand;
 
-    public Transform[] waypoints;
-    private bool waypointTracker = false;
+    //public Transform[] waypoints;
+    //private bool waypointTracker = false;
+    public Transform fireBall;
+    public Vector3 previousPoint;
+    private Direction previousDirection = Direction.None;
+    public List<Direction> points;
+    public Attack[] attacks;
+    public bool canFireAttack = false;
+    public float offset = 30f;
 	// Use this for initialization
 	protected virtual void Start() 
 	{
@@ -40,6 +57,8 @@ public class SixenseObjectController : MonoBehaviour {
 		startRotation = this.gameObject.transform.rotation;
 		Debug.Log("init rotation : " + m_initialRotation);
        	Debug.Log("start Rotation : " + startRotation);
+
+        points = new List<Direction>();
 	}
 	
 	// Update is called once per frame
@@ -87,76 +106,154 @@ public class SixenseObjectController : MonoBehaviour {
 		}
         if (controller.GetButtonDown(SixenseButtons.ONE))// && controller.Hand == SixenseHands.LEFT)
         {
-			m_enabled = false;
-            player.position = spawnpoint.position;
-            player.rotation = spawnpoint.rotation;
-
-            //m_enabled = false;
-//			Quaternion localRotation = new Quaternion(0,0,0,1f) ;
-//            transform.localRotation = localRotation;
-			 transform.rotation = Quaternion.Euler(0,0,0);
-			if(controller.Hand == SixenseHands.LEFT)
-			{
-				transform.GetChild(0).rotation = Quaternion.Euler(0,0,90);
-			}
-			else
-			{
-				transform.GetChild(0).rotation = Quaternion.Euler(0,0,270);
-			}
-					
-			Debug.Log("init rotation : " + m_initialRotation);
-       		Debug.Log("start Rotation : " + startRotation);
+            ResetPositionAndRotation(controller);
         }
 		if ( m_enabled )
 		{
 			UpdatePosition( controller );
 			UpdateRotation( controller );
 			//angle to watch with right joystick
-			if ( controller.Hand == SixenseHands.RIGHT )
-			{
-				var angH = controller.JoystickX * 60;
-	  			var angV = controller.JoystickY * 45;
-	  			cameraObject.transform.localEulerAngles = new Vector3(angV, angH, 0);
-			}
-            CheckAttacks(controller);
+            UpdatePlayerViewRotation(controller);
+            RecordMotion(controller);
 		}
 	}
 
-    private void CheckAttacks(SixenseInput.Controller controller)
+    private void ResetPositionAndRotation(SixenseInput.Controller controller)
     {
+        m_enabled = false;
+        player.position = spawnpoint.position;
+        player.rotation = spawnpoint.rotation;
+
+        transform.GetChild(0).localRotation = Quaternion.Euler(0, 0, 0);
+
+        //m_enabled = false;
+        //Quaternion localRotation = new Quaternion(0, 0, 0, 1f);
+        //            transform.localRotation = localRotation;
+        transform.rotation = Quaternion.Euler(0, 0, 0);
+        if (controller.Hand == SixenseHands.LEFT)
+        {
+            transform.GetChild(0).rotation = Quaternion.Euler(0, 0, 90);
+
+        }
+        else
+        {
+            transform.GetChild(0).rotation = Quaternion.Euler(0, 0, 270);
+        }
+
+        Debug.Log("init rotation : " + m_initialRotation);
+        Debug.Log("start Rotation : " + startRotation);
+    }
+    private void UpdatePlayerViewRotation(SixenseInput.Controller controller)
+    {
+        if (controller.Hand == SixenseHands.RIGHT)
+        {
+            var angH = controller.JoystickX * 60;
+            var angV = controller.JoystickY * 45;
+            cameraObject.transform.localEulerAngles = new Vector3(angV, angH, 0);
+        }
+    }
+    public void RecordMotion(SixenseInput.Controller controller)
+    {
+        //right bumper
         if (controller.Hand == SixenseHands.RIGHT && controller.GetButtonDown(SixenseButtons.BUMPER))
         {
-            Debug.Log("button down");
-            trail.GetComponent<TrailRenderer>().enabled = true;
-            foreach(Transform waypoint in waypoints)
-            {
-                waypoint.gameObject.SetActive(true);
-            }
-            waypointTracker = true;
-        }
-        if(waypointTracker == true)
-        {
-            bool canBefired = true;
-            for (int i = 0; i < waypoints.Length; i++)
-            {
-                if (waypoints[i].GetComponent<Waypoint>().isTriggerd == false)
-                {
-                    canBefired = false;
-                }
-            }
-            if (canBefired)
-            {
-                waypointTracker = false;
-                Debug.Log("SHOTS FIRED");
+            previousPoint = this.transform.localPosition;
+            
+            //enable Trailrenderer + waypoints
 
-                foreach(Transform waypoint in waypoints)
+            trail.GetComponent<TrailRenderer>().enabled = true;
+            //foreach(Transform waypoint in waypoints)
+            //{
+            //    waypoint.gameObject.SetActive(true);
+            //}
+            //waypointTracker = true;
+        }
+        if(controller.GetButton(SixenseButtons.BUMPER))
+        {
+            Vector3 currentPoint = this.transform.localPosition;
+            //if the distance from the current point is far eneogh from the previous
+            if(Vector3.Distance(currentPoint,previousPoint)>1f)
+            {
+                //Debug.Log("Distance : " + Vector3.Distance(currentPoint, previousPoint));
+                Vector3 tempVector = new Vector3(currentPoint.x - previousPoint.x, currentPoint.y - previousPoint.y, 0);
+                float angle = Vector3.Angle(Vector3.up, tempVector.normalized);
+                float dotProduct = Vector2.Dot(Vector3.right, tempVector.normalized);
+                //New point to check the distance
+                previousPoint = currentPoint;
+                //checks the direction
+                if (angle >= 0 && angle < offset && previousDirection != Direction.Up)
+                {                    
+                    //direction is UP
+                    points.Add(Direction.Up);
+                    //Debug.Log("UP");
+                    previousDirection = Direction.Up;
+                }
+                else if (angle <= 180 && angle >= 180 - offset && previousDirection != Direction.Down)
                 {
-                    waypoint.GetComponent<Waypoint>().isTriggerd = false;
-                    waypoint.gameObject.SetActive(false);
-                    trail.GetComponent<TrailRenderer>().enabled = false;
+                    //Direction is DOWN
+                    points.Add(Direction.Down);
+                    //Debug.Log("DOWN");
+                    previousDirection = Direction.Down;
+                }
+                else if (angle >= 90 - offset && angle < 90 + offset && dotProduct > 0 && previousDirection != Direction.Right)
+                {
+                    //Direction is RIGHT
+                    points.Add(Direction.Right);
+                    //Debug.Log("RIGHT");
+                    previousDirection = Direction.Right;
+                }
+                else if (angle >= 90 - offset && angle < 90 + offset && dotProduct < 0 && previousDirection != Direction.Left)
+                {
+                    //Direction is LEFT
+                    points.Add(Direction.Left);
+                    //Debug.Log("LEFT");
+                    previousDirection = Direction.Left;
+                }
+                //else if (previousDirection != Direction.None)
+                //{
+                //    points.Add(Direction.None);
+                //    Debug.Log("NONE");
+                //    previousDirection = Direction.None;
+                //}
+            }
+        }
+        if (controller.Hand == SixenseHands.RIGHT && controller.GetButtonUp(SixenseButtons.BUMPER))
+        {
+            
+            CheckAttacks();
+        }
+    }
+    private void CheckAttacks()
+    {
+        //Check every attack
+        foreach(Attack attack in attacks)
+        {
+            //if there is an attack with the same length
+            if(attack.directions.Length == points.Count)
+            {
+                //Check for the right directions for the attack
+                for(int i = 0;i<attack.directions.Length;i++)
+                {
+                    canFireAttack = true;
+                    //if it has the same direction
+                    if(attack.directions[i] != points[i])
+                    {
+                        canFireAttack = false;
+                    }                   
+                }
+                if (canFireAttack)
+                {
+                    Debug.Log("FIRE ATTACK : " + attack.attackName);
+                    Transform attackObject;
+                    attackObject = Instantiate(attack.fireObject, leftHand.position + -leftHand.up, leftHand.rotation) as Transform;
+                    attackObject.rigidbody.AddForce(-leftHand.up * 3000);
                 }
             }
         }
+
+        points.Clear();
+        previousDirection = Direction.None;
+        trail.GetComponent<TrailRenderer>().enabled = false;
     }
 	
 	
@@ -177,7 +274,7 @@ public class SixenseObjectController : MonoBehaviour {
 	protected void UpdateRotation( SixenseInput.Controller controller )
 	{
 		this.gameObject.transform.localRotation = controller.Rotation * m_initialRotation;
-		Debug.Log("Raw rotation " + controller.RotationRaw);
+
 //		Debug.Log("local Rot : " + this.gameObject.transform.localRotation);
 //		Debug.Log("controller rotation : " + controller.Rotation);
 //		Debug.Log("init rotation : " + m_initialRotation);

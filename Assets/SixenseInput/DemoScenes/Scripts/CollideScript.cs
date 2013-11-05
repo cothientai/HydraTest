@@ -4,7 +4,7 @@ using System.Collections;
 public class CollideScript : MonoBehaviour {
     public Transform player;
     public Transform hand;
-
+    private bool isHanging = false;
     public Vector3 tempLocation;
     private string tagWall = "Wall";
 	// Use this for initialization
@@ -14,12 +14,22 @@ public class CollideScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+        if (isHanging)
+        {
+            Vector3 distance;
+            distance = (tempLocation - hand.position) + player.position;
+            player.rigidbody.MovePosition(distance);
+        }
 	}
+    void FixedUpdate()
+    {
+        
+    }
     void OnCollisionEnter(Collision col)
     {
         if (col.transform.tag == tagWall)
         {
+            isHanging = true;
             tempLocation = hand.position;
             //Debug.Log("TempPosition" + tempLocation);
             //Debug.Log("rigidbody magnitude" + rigidbody.velocity.magnitude);
@@ -33,15 +43,14 @@ public class CollideScript : MonoBehaviour {
         if (collisionInfo.transform.tag == tagWall)
         {
             //Debug.Log("Colliding");
-            Vector3 distance;
-            distance = tempLocation - hand.position;
-            player.position += distance;
-            player.rigidbody.useGravity = false;
+            
+           // player.rigidbody.useGravity = false;
             //Debug.Log(distance);
         }
     }
     void OnCollisionExit(Collision col)
     {
+        isHanging = false;
         player.rigidbody.useGravity = true;
     }
 }
