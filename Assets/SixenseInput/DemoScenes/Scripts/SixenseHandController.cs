@@ -7,64 +7,45 @@
 using UnityEngine;
 using System.Collections;
 
-public class SixenseHandController : SixenseObjectController
+public class SixenseHand : MonoBehaviour
 {
-	protected Animator			m_animator = null;
-	
-	
+	public SixenseHands	m_hand;
+	public SixenseInput.Controller m_controller = null;
 
-	
-	
-	private Transform grabbedObject;
+	Animator 	m_animator;
+	float 		m_fLastTriggerVal;
+	Vector3		m_initialPosition;
+	Quaternion 	m_initialRotation;
 
-	protected override void Start() 
+
+	protected void Start() 
 	{
 		// get the Animator
-		m_animator = this.gameObject.GetComponent<Animator>();
-		Debug.Log("Local position : " + transform.localPosition );
-		base.Start();
+		m_animator = gameObject.GetComponent<Animator>();
+		m_initialRotation = transform.localRotation;
+		m_initialPosition = transform.localPosition;
 	}
-	
-	protected override void UpdateObject( SixenseInput.Controller controller )
+
+
+	protected void Update()
 	{
-		if ( m_animator == null )
+		if ( m_controller == null )
 		{
-			return;
+			m_controller = SixenseInput.GetController( m_hand );
 		}
-		
-		if ( controller.Enabled )  
-		{		
-			// Animation update
-			UpdateAnimationInput( controller );
+
+		else if ( m_animator != null )
+		{
+			UpdateHandAnimation();
 		}
-				
-		base.UpdateObject(controller);
 	}
 	
-	
-	void OnGUI()
-	{
-		if ( Hand == SixenseHands.UNKNOWN )
-		{
-			return;
-		}
-		
-		if ( !m_enabled )
-		{
-			int labelWidth = 250;
-			int labelPadding = 120;
-			int horizOffset = Hand == SixenseHands.LEFT ? -labelWidth - labelPadding  : labelPadding;
-			
-			string handStr = Hand == SixenseHands.LEFT ? "left" : "right";
-			GUI.Box( new Rect( Screen.width / 2 + horizOffset, Screen.height - 40, labelWidth, 30 ),  "Press " + handStr + " START to control " + gameObject.name );		
-		}		
-	}
 	
 	// Updates the animated object from controller input.
-	protected void UpdateAnimationInput( SixenseInput.Controller controller)
+	protected void UpdateHandAnimation()
 	{
 		// Point
-		if ( Hand == SixenseHands.RIGHT ? controller.GetButton(SixenseButtons.ONE) : controller.GetButton(SixenseButtons.TWO) )
+		if ( m_hand == SixenseHands.RIGHT ? m_controller.GetButton(SixenseButtons.ONE) : m_controller.GetButton(SixenseButtons.TWO) )
 		{
 			m_animator.SetBool( "Point", true );
 		}
@@ -74,7 +55,7 @@ public class SixenseHandController : SixenseObjectController
 		}
 		
 		// Grip Ball
-		if ( Hand == SixenseHands.RIGHT ? controller.GetButton(SixenseButtons.TWO) : controller.GetButton(SixenseButtons.ONE)  )
+		if ( m_hand == SixenseHands.RIGHT ? m_controller.GetButton(SixenseButtons.TWO) : m_controller.GetButton(SixenseButtons.ONE)  )
 		{
 			m_animator.SetBool( "GripBall", true );
 		}
@@ -84,7 +65,7 @@ public class SixenseHandController : SixenseObjectController
 		}
 				
 		// Hold Book
-		if ( Hand == SixenseHands.RIGHT ? controller.GetButton(SixenseButtons.THREE) : controller.GetButton(SixenseButtons.FOUR) )
+		if ( m_hand == SixenseHands.RIGHT ? m_controller.GetButton(SixenseButtons.THREE) : m_controller.GetButton(SixenseButtons.FOUR) )
 		{
 			m_animator.SetBool( "HoldBook", true );
 		}
@@ -94,7 +75,7 @@ public class SixenseHandController : SixenseObjectController
 		}
 				
 		// Fist
-		float fTriggerVal = controller.Trigger;
+		float fTriggerVal = m_controller.Trigger;
 		fTriggerVal = Mathf.Lerp( m_fLastTriggerVal, fTriggerVal, 0.1f );
 		m_fLastTriggerVal = fTriggerVal;
 		
@@ -122,56 +103,16 @@ public class SixenseHandController : SixenseObjectController
 			m_animator.SetBool("Idle", false);
 		}
 	}
-	//OWN TESTS
-	
-	public override void Update()
+
+
+	public Quaternion InitialRotation
 	{
-		base.Update();
-		
-		SixenseInput.Controller controller = SixenseInput.GetController( Hand );
-		if( controller != null)
-		{
-//			float fTriggerVal = controller.Trigger;
-//			fTriggerVal = Mathf.Lerp( m_fLastTriggerVal, fTriggerVal, 0.1f );
-//			
-//			Vector3 positionPalm = palm.position;
-//			Debug.DrawRay(positionPalm,-palm.transform.up);
-//			if(fTriggerVal >0.9f)
-//			{
-//				
-//				m_fLastTriggerVal = fTriggerVal;
-////				Debug.Log("controllers position "+controller.Position);
-//				RaycastHit hit;
-//				if(Physics.Raycast(positionPalm,-palm.transform.up,out hit,wallsLayer) && grabbedObject == null)
-//				{
-//					
-//					//hit.transform.parent = transform;
-//					//grabbedObject = hit.transform;
-//					//grabbedObject.position = -palm.transform.up;
-////					Debug.Log("hited the " + hit.transform);
-//				}
-//			}
-		}
-		
+		get { return m_initialRotation; }
 	}
-
-
-    
-    void OnCollisionStay(Collision collisionInfo)
-    {
-       
-    }
-//	void OnTriggerStay(Collider collision) {
-
-//		Debug.Log(fTriggerVal);
-//		if (fTriggerVal > 0.9f ) {
-//			
-//			collision.transform.parent = transform;
-//		}
-//		else {
-//			collision.transform.parent = null;
-//		}
-//	}
 	
+	public Vector3 InitialPosition
+	{
+		get { return m_initialPosition; }
+	}
 }
 
